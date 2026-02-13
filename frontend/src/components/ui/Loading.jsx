@@ -1,0 +1,1 @@
+import Spinner from './Spinner';\n\nconst Loading = ({ message = \"Processing...\" }) => {\n  return (\n    <div className=\"flex flex-col items-center justify-center py-8 sm:py-12\">\n      <Spinner size=\"lg\" />\n      <p className=\"mt-4 text-gray-600 text-sm sm:text-base lg:text-lg\">{message}</p>\n    </div>\n  );\n};\n\nexport default Loading;\n
