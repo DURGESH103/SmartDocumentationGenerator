@@ -37,6 +37,9 @@ const Navbar = () => {
             <Link to="/upload" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
               Upload
             </Link>
+            <Link to="/summarize" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
+              Summarize
+            </Link>
             
             <Link to="/upload">
               <button className="btn-primary text-sm">
@@ -120,6 +123,13 @@ const Navbar = () => {
               className="block px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg font-medium"
             >
               Upload Project
+            </Link>
+            <Link
+              to="/summarize"
+              onClick={() => setShowMobileMenu(false)}
+              className="block px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg font-medium"
+            >
+              Summarize Document
             </Link>
             <button className="w-full text-left px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg font-medium">
               Profile

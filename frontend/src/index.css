@@ -14,7 +14,7 @@
 
 @layer components {
   .glass {
-    @apply bg-white/80 backdrop-blur-lg border border-gray-200/50;
+    @apply bg-white/80 backdrop-blur-lg border border-gray-200/50 shadow-sm;
   }
   
   .btn-primary {
@@ -27,6 +27,21 @@
   
   .card {
     @apply bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300;
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 }
 
