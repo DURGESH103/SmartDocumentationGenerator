@@ -4,6 +4,7 @@ from app.db.mongo import mongodb
 from app.core.security import hash_password, verify_password, create_access_token
 from app.auth.schemas import UserRegister, UserLogin
 from bson import ObjectId
+import uuid
 
 class AuthService:
     @staticmethod
@@ -19,11 +20,15 @@ class AuthService:
                 detail="Email already registered"
             )
         
+        # Create workspace_id for user
+        workspace_id = str(uuid.uuid4())
+        
         # Create user document
         user_doc = {
             "name": user_data.name,
             "email": user_data.email,
             "hashed_password": hash_password(user_data.password),
+            "workspace_id": workspace_id,
             "created_at": datetime.utcnow()
         }
         
@@ -55,8 +60,11 @@ class AuthService:
                 detail="Invalid email or password"
             )
         
-        # Create access token
-        access_token = create_access_token(data={"sub": user["email"]})
+        # Create access token with workspace_id
+        access_token = create_access_token(data={
+            "sub": user["email"],
+            "workspace_id": user["workspace_id"]
+        })
         
         return {
             "access_token": access_token,
@@ -79,5 +87,6 @@ class AuthService:
             "id": str(user["_id"]),
             "name": user["name"],
             "email": user["email"],
+            "workspace_id": user["workspace_id"],
             "created_at": user["created_at"]
         }

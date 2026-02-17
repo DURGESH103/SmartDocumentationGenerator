@@ -22,9 +22,11 @@ export const uploadZip = async (file) => {
   const formData = new FormData();
   formData.append('file', file);
   
+  const token = localStorage.getItem('token');
   const response = await axios.post(`${API_BASE_URL}/upload/zip`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
+      'Authorization': `Bearer ${token}`
     },
   });
   

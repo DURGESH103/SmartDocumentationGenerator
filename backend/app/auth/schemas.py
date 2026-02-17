@@ -15,6 +15,7 @@ class UserResponse(BaseModel):
     id: str
     name: str
     email: str
+    workspace_id: str
     created_at: datetime
 
 class Token(BaseModel):
@@ -23,3 +24,4 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     email: Optional[str] = None
+    workspace_id: Optional[str] = None

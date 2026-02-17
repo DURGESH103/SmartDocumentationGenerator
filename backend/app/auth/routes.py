@@ -8,7 +8,7 @@ router = APIRouter()
 security = HTTPBearer()
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
-    """Dependency to get current authenticated user"""
+    """Dependency to get current authenticated user with workspace_id from JWT"""
     token = credentials.credentials
     payload = decode_access_token(token)
     
@@ -20,7 +20,9 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         )
     
     email = payload.get("sub")
-    if email is None:
+    workspace_id = payload.get("workspace_id")
+    
+    if email is None or workspace_id is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token payload"

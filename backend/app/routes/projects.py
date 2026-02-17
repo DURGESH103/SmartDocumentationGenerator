@@ -4,9 +4,7 @@ from sqlalchemy import desc, asc
 from app.core.database import get_db
 from app.models.database import Project
 from app.models.schemas import ProjectResponse, ProjectDetailResponse
-from app.services.dependency_detector import DependencyDetector
-from app.services.health_score import HealthScoreCalculator
-from app.services.insights_engine import InsightsEngine
+from app.auth.routes import get_current_user
 from typing import List, Optional
 import os
 import shutil
@@ -20,9 +18,11 @@ def get_projects(
     language: Optional[str] = None,
     sort_by: str = Query("newest", regex="^(newest|oldest)$"),
     search: Optional[str] = None,
+    current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    query = db.query(Project)
+    workspace_id = current_user["workspace_id"]
+    query = db.query(Project).filter(Project.workspace_id == workspace_id)
     
     if language:
         query = query.filter(Project.primary_language == language)
@@ -40,48 +40,66 @@ def get_projects(
 
 @router.get("/user/me", response_model=List[ProjectResponse])
 def get_user_projects(
-    user_id: str = "default_user",
+    current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    projects = db.query(Project).filter(Project.user_id == user_id).order_by(desc(Project.created_at)).all()
+    workspace_id = current_user["workspace_id"]
+    projects = db.query(Project).filter(Project.workspace_id == workspace_id).order_by(desc(Project.created_at)).all()
     return projects
 
 @router.get("/{project_id}", response_model=ProjectDetailResponse)
-def get_project(project_id: str, db: Session = Depends(get_db)):
-    project = db.query(Project).filter(Project.id == project_id).first()
+def get_project(
+    project_id: str,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    workspace_id = current_user["workspace_id"]
+    project = db.query(Project).filter(
+        Project.id == project_id,
+        Project.workspace_id == workspace_id
+    ).first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     return project
 
 @router.delete("/{project_id}")
-def delete_project(project_id: str, user_id: str = "default_user", db: Session = Depends(get_db)):
-    project = db.query(Project).filter(Project.id == project_id).first()
+def delete_project(
+    project_id: str,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    workspace_id = current_user["workspace_id"]
+    project = db.query(Project).filter(
+        Project.id == project_id,
+        Project.workspace_id == workspace_id
+    ).first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     
-    # Security: Verify project ownership
-    if project.user_id != user_id:
-        raise HTTPException(status_code=403, detail="Not authorized to delete this project")
-    
     # Delete related files if they exist
     from app.core.config import settings
-    import shutil
     project_path = os.path.join(settings.UPLOAD_DIR, project_id)
     if os.path.exists(project_path):
         try:
             shutil.rmtree(project_path)
         except Exception as e:
-            # Log error but continue with database deletion
             print(f"Error deleting files: {e}")
     
-    # Delete from database
     db.delete(project)
     db.commit()
     return {"message": "Project deleted successfully"}
 
 @router.post("/{project_id}/download")
-def increment_download(project_id: str, db: Session = Depends(get_db)):
-    project = db.query(Project).filter(Project.id == project_id).first()
+def increment_download(
+    project_id: str,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    workspace_id = current_user["workspace_id"]
+    project = db.query(Project).filter(
+        Project.id == project_id,
+        Project.workspace_id == workspace_id
+    ).first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     
@@ -90,16 +108,22 @@ def increment_download(project_id: str, db: Session = Depends(get_db)):
     return {"download_count": project.readme_download_count}
 
 @router.get("/{project_id}/dependencies")
-def get_project_dependencies(project_id: str, db: Session = Depends(get_db)):
-    project = db.query(Project).filter(Project.id == project_id).first()
+def get_project_dependencies(
+    project_id: str,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    workspace_id = current_user["workspace_id"]
+    project = db.query(Project).filter(
+        Project.id == project_id,
+        Project.workspace_id == workspace_id
+    ).first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     
-    # Return cached dependencies if available
     if project.dependencies_json:
         return project.dependencies_json
     
-    # Otherwise return empty structure
     return {
         "frontend_framework": None,
         "backend_framework": None,
@@ -111,20 +135,27 @@ def get_project_dependencies(project_id: str, db: Session = Depends(get_db)):
     }
 
 @router.get("/{project_id}/health")
-def get_project_health(project_id: str, db: Session = Depends(get_db)):
-    project = db.query(Project).filter(Project.id == project_id).first()
+def get_project_health(
+    project_id: str,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    workspace_id = current_user["workspace_id"]
+    project = db.query(Project).filter(
+        Project.id == project_id,
+        Project.workspace_id == workspace_id
+    ).first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     
-    # Try to find project path in uploads
     from app.core.config import settings
+    from app.services.health_score import HealthScoreCalculator
     project_path = os.path.join(settings.UPLOAD_DIR, project_id)
     
     if os.path.exists(project_path):
         health = HealthScoreCalculator.calculate_health(project_path)
         return health
     
-    # Return default health if path not found
     return {
         "score": 50,
         "grade": "D",
@@ -132,16 +163,24 @@ def get_project_health(project_id: str, db: Session = Depends(get_db)):
     }
 
 @router.get("/{project_id}/insights")
-def get_project_insights(project_id: str, db: Session = Depends(get_db)):
-    project = db.query(Project).filter(Project.id == project_id).first()
+def get_project_insights(
+    project_id: str,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    workspace_id = current_user["workspace_id"]
+    project = db.query(Project).filter(
+        Project.id == project_id,
+        Project.workspace_id == workspace_id
+    ).first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     
-    # Get dependencies and health
     dependencies = project.dependencies_json or {}
     
-    # Try to find project path
     from app.core.config import settings
+    from app.services.health_score import HealthScoreCalculator
+    from app.services.insights_engine import InsightsEngine
     project_path = os.path.join(settings.UPLOAD_DIR, project_id)
     
     if os.path.exists(project_path):
@@ -149,7 +188,6 @@ def get_project_insights(project_id: str, db: Session = Depends(get_db)):
         insights = InsightsEngine.generate_insights(project_path, dependencies, health)
         return {"insights": insights}
     
-    # Return basic insights if path not found
     return {
         "insights": [
             {

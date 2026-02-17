@@ -10,7 +10,7 @@ const Navbar = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate('/');
   };
 
   return (
@@ -127,7 +127,10 @@ const Navbar = () => {
             <button className="w-full text-left px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg font-medium">
               Settings
             </button>
-            <button className="w-full text-left px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg font-medium">
+            <button 
+              onClick={handleLogout}
+              className="w-full text-left px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg font-medium"
+            >
               Logout
             </button>
           </div>
