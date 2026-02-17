@@ -30,7 +30,7 @@ const UploadPage = () => {
       setTimeout(() => setProgress(60), 500);
       const response = await uploadZip(file);
       setProgress(100);
-      setTimeout(() => navigate(`/documentation/${response.doc_id}`), 500);
+      setTimeout(() => navigate(`/projects/${response.project_id}`), 500);
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to upload file');
       setProgress(0);
@@ -54,7 +54,7 @@ const UploadPage = () => {
       setTimeout(() => setProgress(60), 500);
       const response = await uploadGithub(githubUrl);
       setProgress(100);
-      setTimeout(() => navigate(`/documentation/${response.doc_id}`), 500);
+      setTimeout(() => navigate(`/projects/${response.project_id}`), 500);
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to clone repository');
       setProgress(0);

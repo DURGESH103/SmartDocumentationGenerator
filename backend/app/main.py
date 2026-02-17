@@ -2,7 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import engine, Base
-from app.routes import upload, documentation
+from app.routes import upload, documentation, projects
+from app.auth import routes as auth_routes
+from app.db.mongo import mongodb
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -12,6 +14,14 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title=settings.PROJECT_NAME, version=settings.VERSION)
 
+@app.on_event("startup")
+async def startup_event():
+    await mongodb.connect_db()
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    await mongodb.close_db()
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
@@ -20,8 +30,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth_routes.router, prefix="/api/auth", tags=["auth"])
 app.include_router(upload.router, prefix="/api/upload", tags=["upload"])
 app.include_router(documentation.router, prefix="/api/docs", tags=["documentation"])
+app.include_router(projects.router, prefix="/api/projects", tags=["projects"])
 
 @app.get("/")
 def root():

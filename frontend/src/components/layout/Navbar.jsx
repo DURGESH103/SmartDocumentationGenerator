@@ -1,9 +1,17 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
 
 const Navbar = () => {
   const [showProfile, setShowProfile] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <nav className="glass sticky top-0 z-50 border-b border-gray-200/50">
@@ -20,8 +28,11 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6">
-            <Link to="/" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
+            <Link to="/dashboard" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
               Dashboard
+            </Link>
+            <Link to="/projects" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
+              Projects
             </Link>
             <Link to="/upload" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
               Upload
@@ -37,26 +48,36 @@ const Navbar = () => {
             </Link>
 
             <div className="relative">
-              <button
-                onClick={() => setShowProfile(!showProfile)}
-                className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-semibold hover:shadow-lg transition-all"
-              >
-                U
-              </button>
-              
-              {showProfile && (
-                <div className="absolute right-0 mt-2 w-48 card py-2 animate-fade-in">
-                  <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                    Profile
+              {user ? (
+                <>
+                  <button
+                    onClick={() => setShowProfile(!showProfile)}
+                    className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-semibold hover:shadow-lg transition-all"
+                  >
+                    {user.name.charAt(0).toUpperCase()}
                   </button>
-                  <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                    Settings
+                  
+                  {showProfile && (
+                    <div className="absolute right-0 mt-2 w-48 card py-2 animate-fade-in">
+                      <div className="px-4 py-2 border-b">
+                        <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                        <p className="text-xs text-gray-500">{user.email}</p>
+                      </div>
+                      <button 
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <Link to="/login">
+                  <button className="btn-primary text-sm">
+                    Sign In
                   </button>
-                  <hr className="my-2" />
-                  <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
-                    Logout
-                  </button>
-                </div>
+                </Link>
               )}
             </div>
           </div>
@@ -80,11 +101,18 @@ const Navbar = () => {
         {showMobileMenu && (
           <div className="md:hidden py-4 space-y-2 animate-fade-in">
             <Link
-              to="/"
+              to="/dashboard"
               onClick={() => setShowMobileMenu(false)}
               className="block px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg font-medium"
             >
               Dashboard
+            </Link>
+            <Link
+              to="/projects"
+              onClick={() => setShowMobileMenu(false)}
+              className="block px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg font-medium"
+            >
+              Projects
             </Link>
             <Link
               to="/upload"

@@ -122,7 +122,7 @@ const HomePage = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Recent Projects</h2>
-            <Button variant="ghost" className="hidden sm:block">View All →</Button>
+            <Button variant="ghost" className="hidden sm:block" onClick={() => navigate('/projects')}>View All →</Button>
           </div>
           
           <div className="grid gap-3 sm:gap-4">
